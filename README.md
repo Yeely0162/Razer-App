@@ -1,4 +1,5 @@
 # Razer Chroma · WLED Studio
+<img width="1179" height="744" alt="af628f4336c03b8abbd091a3240b0b59" src="https://github.com/user-attachments/assets/8e613349-5332-4538-9098-a1e7c51985ef" />
 
 Bridges the colours Razer Synapse broadcasts onto any number of WLED controllers, with a
 modern desktop UI, a 4–32 channel palette and real UDP segmentation for long strips.
