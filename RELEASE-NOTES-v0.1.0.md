@@ -1,47 +1,161 @@
 # Razer Chroma · WLED Studio v0.1.0
 
-First release of the rebuilt bridge between Razer Chroma Broadcast and WLED controllers.
+原版 `0.0.2` 只能同步 4 个颜色、超过 490 颗灯就发不出去，界面是 WinForms 风格的 GroupBox 堆叠，
+而且 Razer 回调直接跑在 UI 线程上。这个版本把颜色管线、UDP 传输、LED 映射和线程模型全部重做，
+原有功能（Razer 同步、Lenovo 键盘、多台 WLED、开机启动、mDNS 发现）一个没少。
 
-## Highlights
+---
 
-- **4 to 32 palette channels.** The four colours Synapse broadcasts stay the anchors; every
-  extra channel is interpolated and labelled `virtual`. No generated colour is ever presented
-  as real Razer data.
-- **Long strips actually work.** DRGB is used up to 490 LEDs, DNRGB with absolute start
-  indexes above that. 1000 LEDs = 3 packets, 2000 LEDs = 5 packets per frame, verified byte
-  for byte against the WLED protocol.
-- **Proper segment mapping.** Absolute LED positions, gaps between segments stay black,
-  per segment reverse and per segment channel range.
-- **Smooth by construction.** The Razer callback only copies four colours into a single
-  slot; a background render thread maps and sends. The UI never sits in the light path.
-- **New UI.** Overview / Devices / Mapping / Performance / Settings, a palette drawn as one
-  colour bar, per device LED previews and a tray icon.
+## 🚀 亮点
 
-## What changed from the original app
+- **调色板 4 → 32 通道**：Razer 广播的 4 个颜色作为锚点，其余通道按位置插值生成，界面上原生颜色与
+  虚拟颜色分开标注，绝不把插值结果伪装成 Razer 实时数据。
+- **长灯带真的能用**：≤490 颗走 DRGB 单包，>490 颗自动切 DNRGB 并携带绝对起始索引。
+  1000 颗 = 3 包，2000 颗 = 5 包，已按 WLED 协议逐字节回解码验证。
+- **Segment 映射修正**：按绝对 LED 位置写入，段间空隙保持黑色，每段可独立设置通道范围、渐变与方向。
+- **不再卡顿**：Razer 回调只做一件事——把 4 个颜色拷进一个槽位；映射与发送在独立渲染线程完成；
+  预览与灯光输出帧率彻底分离。
+- **全新界面**：Overview / Devices / Mapping / Performance / Settings 五页，调色板画成一条连续色条，
+  每台设备都有实时灯带预览，支持托盘常驻。
 
-See `UPGRADE-NOTES.md` (Chinese) for the full list. The short version: the colour pipeline,
-UDP transport, mapping and threading were rebuilt; every original feature (Razer sync,
-Lenovo keyboard, multiple WLED devices, run at boot, mDNS discovery) is still there.
+---
 
-## Requirements
+## ✨ 新增功能
 
-- Windows 10 / 11, **.NET 8 Desktop Runtime**
-- WLED **0.11 or newer**
-- A valid Razer Chroma Broadcast App ID
+**颜色与通道**
+- 通道数可选 4 / 8 / 12 / 16 / 24 / 32，切换即时生效
+- 每个通道都有编号、位置百分比与颜色预览
+- 调色板以一条 ColorBar 呈现，下方按通道位置标注刻度，通道数变化时刻度自动增删
+- 设备与 Segment 均可单独指定使用的通道范围（From / To），互不干扰
 
-## Install
+**设备管理**
+- 设备卡片显示连接状态、地址、灯数、当前映射范围
+- 每台设备可独立设置：亮度、物理 LED 窗口（起始 / 结束灯号）、渐变、方向
+- 「All」一键恢复整条灯带，「Edit mapping」直接跳转到映射页
+- 发现功能从设置页搬到了设备页：搜索 / 停止、结果列表、手动输入地址
+- **发现到的设备只列出，必须点 Add 才会加入**，Ignore 直接丢弃；手动输入会校验 IP 格式并提示原因
+- 掉线设备每 30 秒静默重连一次；重新启用设备会立即触发刷新
 
-1. Download `Razer-Chroma-WLED-Studio-v0.1.0-win-x64.zip`.
-2. Extract anywhere and run `RazerChromaWLEDConnect.exe`.
-3. Paste your App ID in Settings, then add controllers on the Devices page.
+**性能与诊断**
+- Performance 页：输出帧率、Razer 接收帧率、UDP 包速率、发送延迟、跳帧数、逐设备状态
+- 输出帧率（30–120）与预览帧率（5–60）可分别配置
+- 崩溃不再直接退出：异常写入程序目录的 `crash.log`
 
-`settings.xml` is created next to the executable on first save; it is not part of the zip.
+**交互**
+- 单实例运行：重复启动会把已运行的窗口从托盘唤到前台，不会开第二个进程抢 Razer App ID
+- 关闭窗口收进托盘（首次提示一次），退出在托盘右键菜单且二次确认
+- 设置项改动自动存盘，无需手动保存
 
-## Known limitations
+---
 
-- WLED receives live data over UDP; a controller that goes offline is retried every
-  30 seconds rather than instantly.
-- `ChromaLink1` exists in the SDK but Synapse leaves it black on the tested setups, so only
-  ChromaLink2–5 are used as anchors.
-- Preview refresh rate is configurable (5–60 fps). Static scenes cost nothing because frames
-  are only pushed when the colours actually change.
+## 🔧 变更
+
+- **目标框架 .NET 5 → .NET 8**（.NET 5 已停止支持）
+- 项目拆分为两个工程：
+  - `RazerChromaWLEDConnect.Core` —— 无 WPF 依赖，协议 / 插值 / 映射 / 渲染管线 / ViewModel
+  - `RazerChromaWLEDConnect` —— WPF 外壳（视图、主题、平台服务）
+- 原独立设置窗口合并进主窗口的 Settings 页
+- 全部改为 MVVM：设备逻辑从 `MainWindow.xaml.cs` 移出
+- 主题统一：单一 Razer 绿强调色（`#44D62C`）、中性色阶、无渐变无发光
+- **亮度改为在发送前对颜色做软件缩放**。WLED 在实时模式下经常会忽略状态包里的 `bri`，
+  所以原来拖动滑块灯带毫无反应
+- **同步状态判定改为"收到真实颜色即视为 Live"**。Synapse 有时只推送颜色、不发
+  `BroadcastStatus.Live`，旧逻辑会一直卡在 Waiting；空闲判定也从 5 秒放宽到 60 秒
+- 状态区增加一句人话提示，直接告诉你下一步该做什么（例如「去设置页填 App ID」）
+
+---
+
+## 🐛 修复
+
+| 问题 | 说明 |
+|---|---|
+| 超过 490 颗灯输出错乱 | 原来只用 DRGB 单包，超出部分被截断；现在自动切 DNRGB 分包 |
+| Segment 位置错位 | 原来把各段颜色首尾相接拼成一整条，段起点、段间空洞、`rev` 全部丢失 |
+| 界面卡顿 / 拖动时掉帧 | 预览每帧重建 `LinearGradientBrush`（2000 颗灯 = 4000 个 GradientStop） |
+| 打开设置卡住界面 | `load()` 里 2 秒超时的 HTTP 请求跑在 UI 线程上，现在全走线程池 |
+| 闪退（多点几下就退出） | 设备刷新在线程池里清空 `Segments` 集合，与界面枚举冲突抛异常 |
+| 调色板刻度残留 / 数字重叠 | 通道数变化时未刷新，旧刻度与新刻度叠加；且一行通道数被错误地固定为 32 |
+| 通道数 > 4 时设备只亮 4 个颜色 | 旧的 `Led1..Led4` 勾选在任何通道数下都生效，把设备钉死在前 4 个通道 |
+| 关闭窗口后进程仍在跑 | 原来用 `Thread.Sleep(1000)` 等待，现在停止时先发黑、退出 live、释放 UDP 再退出 |
+| 设置窗口越开越卡 | 每次打开都重复订阅 `PropertyChanged` 且从不移除 |
+| 别人克隆后编译失败 | `.csproj` 里写死了 `C:\Users\Rick\.nuget\...` 的 hidapi 路径，改为从 NuGet 包路径复制 |
+| 调色板与实时色块对不上 | 渐变画刷重绘时保留上一帧部分像素，出现半新半旧的"分块刷新"；改为逐像素写入位图 |
+
+---
+
+## ⚡ 性能
+
+- 渲染路径零分配：设备帧缓冲固定复用，发送前不再 `new int[3]` / `new List<int[]>`
+- 预览缓冲每台设备复用一份，设备移除时同步回收
+- 画面未变化时完全不推送预览帧（哈希比对），静止场景几乎无 CPU 开销
+- 每个刷新周期最多一次色条重绘，且合并待办，界面繁忙时不会堆积
+- 实测单核渲染 + 打包：490 颗灯 0.026 ms/帧，2000 颗灯 0.065 ms/帧
+  （60fps 预算为 16.6 ms，占比不到 0.5%）
+
+---
+
+## ⚠️ 破坏性变更
+
+- 需要 **.NET 8 Desktop Runtime**，不再是 .NET 5
+- 点关闭按钮现在是**收进托盘**，不再退出程序。退出请用托盘右键菜单
+- 旧的 `settings.xml` 可以直接读取，但首次保存后会新增字段（通道数、帧率、LED 窗口、
+  通道范围、方向）并去掉冗余的 LED 预览数组，文件体积从 7.5 KB 降到约 1.7 KB
+
+---
+
+## 📦 安装
+
+**系统要求**
+
+| 项目 | 要求 |
+|---|---|
+| 系统 | Windows 10 / 11 |
+| 运行时 | [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| 控制器 | WLED **0.11 及以上**（实时 UDP 接口） |
+| Razer | 一个已注册到 Synapse 的 Chroma Broadcast App ID |
+
+**步骤**
+
+1. 下载 `Razer-Chroma-WLED-Studio-v0.1.0-win-x64.zip`
+2. 解压到任意目录，运行 `RazerChromaWLEDConnect.exe`
+3. 打开 **Settings** 粘贴 Razer App ID（完整 GUID）
+4. 打开 **Devices**，点 **Search** 搜索控制器，或直接输入 IP 地址
+5. 在 **Mapping** 里为每台设备选择通道范围
+
+`settings.xml` 会在首次保存时生成在 exe 同目录，**不会包含在压缩包里**——它存有你的 App ID 和设备列表。
+
+---
+
+## 🧪 测试
+
+核心引擎 102 条断言全部通过，覆盖：
+
+- UDP 分包：150 / 490 / 491 / 1000 / 2000 颗灯，回解码与源数据**逐字节一致**
+- 模式切换：490 走 DRGB 单包，491 自动切 DNRGB 两包
+- 起始索引：各包首尾相接，>255 时高字节正确（如 start=490 → `01 EA`）
+- 颜色插值：4/8/12/16/24/32 通道下锚点保留、位置递增、间距最优
+- LED 映射：渐变、反向、物理窗口、多段绝对定位、段间空隙、空通道范围
+- 通道管理：`CopyChannels` 返回选中通道数，32 → 12 收缩后旧通道必须消失
+- 旧配置兼容：4 通道时 `Led1..Led4` → C1..C4，>4 通道时自动使用整条调色板
+
+详见仓库内 `TEST-REPORT.md`。
+
+---
+
+## ⚠️ 已知问题
+
+- `ChromaLink1` 在 SDK 中存在，但实测在 Synapse 下始终是黑色，因此只使用
+  `ChromaLink2–5` 作为原生锚点。真实颜色上限为 4 个，其余均为插值
+- 设备掉线后最多需要 30 秒才会被重新探测到
+- 预览缓冲每台设备一份，设备数量很多时会占用少量额外内存（WPF 自身基线约 40–60 MB）
+
+---
+
+## 🙏 致谢
+
+- 原作者 [fu-raz](https://github.com/fu-raz/Razer-Chroma-WLED-Connect-App) 提供了这套桥接程序的起点
+- [ChromaBroadcastSDK.NET](https://github.com/ChromaControl/ChromaBroadcastSDK.NET) 提供 Razer SDK 封装
+- [Aircoookie/WLED](https://github.com/Aircoookie/WLED) 与社区对 UDP 协议的说明
+- 图标来自 Flaticon 的 Smashicons
+
+**Full Changelog**: https://github.com/Yeely0162/Razer-Chroma-WLED-Connect-App/commits/v0.1.0
