@@ -1,0 +1,135 @@
+<UserControl x:Class="RazerChromaWLEDConnect.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="860">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="24,20,24,36" MaxWidth="1180">
+
+            <!-- ================= razer ================= -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                <StackPanel>
+                    <TextBlock Text="Razer Chroma" Style="{StaticResource TxtH2}" />
+                    <TextBlock Text="The App ID registered with Synapse. Changing it restarts the Chroma link."
+                               Style="{StaticResource TxtCaption}" Margin="0,3,0,0" />
+
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding Options.RazerAppId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1" Content="Apply" Style="{StaticResource BtnPrimary}" Margin="10,0,0,0"
+                                Command="{Binding Options.ApplyAppIdCommand}" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ================= channels & frame rate ================= -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                <StackPanel>
+                    <TextBlock Text="Channels and frame rate" Style="{StaticResource TxtH2}" />
+                    <TextBlock Text="More channels give finer colour banding without pretending to be extra Razer inputs."
+                               Style="{StaticResource TxtCaption}" Margin="0,3,0,0" />
+
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="Channels" Style="{StaticResource TxtLabel}" />
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding Options.ChannelOptions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <RadioButton Style="{StaticResource Segment}" GroupName="SettingsChannels"
+                                                 Content="{Binding Label}" Margin="2,0"
+                                                 IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                                 Command="{Binding SelectCommand}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="70" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Output rate" Style="{StaticResource TxtLabel}" />
+                        <Slider Grid.Column="1" Minimum="30" Maximum="120" TickFrequency="10"
+                                IsSnapToTickEnabled="True" Value="{Binding Options.TargetFps, Mode=TwoWay}"
+                                VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2" Text="{Binding Options.TargetFps}" Style="{StaticResource TxtMono}"
+                                   HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="70" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Preview rate" Style="{StaticResource TxtLabel}" />
+                        <Slider Grid.Column="1" Minimum="5" Maximum="60" TickFrequency="5"
+                                IsSnapToTickEnabled="True" Value="{Binding Options.PreviewFps, Mode=TwoWay}"
+                                VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2" Text="{Binding Options.PreviewFps}" Style="{StaticResource TxtMono}"
+                                   HorizontalAlignment="Right" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ================= startup ================= -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Start on Windows boot" Style="{StaticResource TxtH2}" />
+                        <TextBlock Text="Starts hidden in the tray and begins syncing straight away."
+                                   Style="{StaticResource TxtCaption}" Margin="0,3,0,0" />
+                    </StackPanel>
+
+                    <ToggleButton Grid.Column="1" Style="{StaticResource Switch}" VerticalAlignment="Center"
+                                  IsChecked="{Binding Options.RunAtBoot, Mode=TwoWay}" />
+                </Grid>
+            </Border>
+
+            <!-- ================= about ================= -->
+            <Border Style="{StaticResource Card}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="About" Style="{StaticResource TxtH2}" />
+                        <TextBlock Style="{StaticResource TxtBody}" Margin="0,4,0,0">
+                            <Run Text="Razer Chroma WLED Studio" />
+                            <Run Text="{Binding Options.VersionText, Mode=OneWay}" />
+                            <Run Text="· bridges Razer Chroma Broadcast to any number of WLED strips." />
+                        </TextBlock>
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Content="Open project page" Style="{StaticResource BtnGhost}"
+                            VerticalAlignment="Center" Command="{Binding Options.AboutCommand}" />
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,238 @@
+<UserControl x:Class="RazerChromaWLEDConnect.Views.MappingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:RazerChromaWLEDConnect.Controls"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="860">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="24,20,24,36" MaxWidth="1180">
+
+            <!-- ================= palette ================= -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Palette" Style="{StaticResource TxtH2}" />
+                            <TextBlock Text="{Binding ChannelSummary}" Style="{StaticResource TxtCaption}" Margin="0,3,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="6" Height="6" Fill="{StaticResource Accent}" VerticalAlignment="Center" />
+                            <TextBlock Text="Razer native" Style="{StaticResource TxtCaption}" Margin="6,0,16,0" />
+                            <Ellipse Width="6" Height="6" Fill="{StaticResource Violet}" VerticalAlignment="Center" />
+                            <TextBlock Text="interpolated" Style="{StaticResource TxtCaption}" Margin="6,0,0,0" />
+                        </StackPanel>
+                    </Grid>
+
+                    <controls:PaletteStrip Margin="0,14,0,0" Height="58"
+                                           Channels="{Binding Channels}"
+                                           Revision="{Binding PaletteVersion}" />
+                </StackPanel>
+            </Border>
+
+            <!-- ================= per device ================= -->
+            <ItemsControl ItemsSource="{Binding DeviceList}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                            <StackPanel>
+
+                                <!-- header -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,9,0"
+                                                 Fill="{Binding StatusKey, Converter={StaticResource StatusToBrush}}" />
+                                        <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding AddressText}" Style="{StaticResource TxtCaption}"
+                                                   Margin="10,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1" Style="{StaticResource Pill}">
+                                        <TextBlock Text="{Binding MappingSummary}" Style="{StaticResource TxtMono}" FontSize="10.5" />
+                                    </Border>
+                                </Grid>
+
+                                <controls:PaletteStrip Margin="0,12,0,0" Height="52"
+                                                       Channels="{Binding DataContext.Channels,
+                                                                   RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                       Revision="{Binding DataContext.PaletteVersion,
+                                                                  RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                       ActiveStart="{Binding ChannelStart}"
+                                                       ActiveEnd="{Binding ChannelEnd}" />
+
+                                <!-- live preview -->
+                                <Border Background="{StaticResource Sunken}" BorderBrush="{StaticResource Hairline}"
+                                        BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,14,0,0">
+                                    <controls:LedStrip Device="{Binding}" Height="22" />
+                                </Border>
+
+                                <!-- channel range + options -->
+                                <Grid Margin="0,18,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="250" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Channel range" Style="{StaticResource TxtLabel}" />
+                                            <Button Grid.Column="1" Content="Use all" Style="{StaticResource BtnGhost}"
+                                                    Padding="10,3" Command="{Binding UseAllChannelsCommand}"
+                                                    ToolTip="Map every palette channel across this strip." />
+                                        </Grid>
+
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="52" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="48" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="From" Style="{StaticResource TxtLabel}" />
+                                            <Slider Grid.Column="1" Minimum="1" Maximum="{Binding ChannelCount}"
+                                                    IsSnapToTickEnabled="True" TickFrequency="1"
+                                                    Value="{Binding ChannelStart, Mode=TwoWay}" VerticalAlignment="Center"
+                                                    ToolTip="First palette channel used at the start of the strip." />
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <TextBlock Text="C" Style="{StaticResource TxtMono}" />
+                                                <TextBlock Text="{Binding ChannelStart}" Style="{StaticResource TxtMono}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="52" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="48" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="To" Style="{StaticResource TxtLabel}" />
+                                            <Slider Grid.Column="1" Minimum="1" Maximum="{Binding ChannelCount}"
+                                                    IsSnapToTickEnabled="True" TickFrequency="1"
+                                                    Value="{Binding ChannelEnd, Mode=TwoWay}" VerticalAlignment="Center"
+                                                    ToolTip="Last palette channel used at the end of the strip." />
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <TextBlock Text="C" Style="{StaticResource TxtMono}" />
+                                                <TextBlock Text="{Binding ChannelEnd}" Style="{StaticResource TxtMono}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1" Width="1" Background="{StaticResource Hairline}" Margin="24,0" />
+
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Options" Style="{StaticResource TxtLabel}" Margin="0,0,0,10" />
+                                        <CheckBox Style="{StaticResource Check}" Content="Blend channels"
+                                                  IsChecked="{Binding Gradient, Mode=TwoWay}" Margin="0,0,0,8"
+                                                  ToolTip="Interpolate between channels. Off gives hard colour bands." />
+                                        <CheckBox Style="{StaticResource Check}" Content="Reverse direction"
+                                                  IsChecked="{Binding Reverse, Mode=TwoWay}" Margin="0,0,0,10"
+                                                  ToolTip="Run the palette from the far end of the strip back." />
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton Style="{StaticResource Segment}" GroupName="{Binding GroupName}"
+                                                         Content="Whole strip"
+                                                         ToolTip="One channel range across every LED of this device."
+                                                         IsChecked="{Binding WholeStrip, Mode=TwoWay}" />
+                                            <RadioButton Style="{StaticResource Segment}" GroupName="{Binding GroupName}"
+                                                         Content="Per segment" Margin="4,0,0,0"
+                                                         ToolTip="Use the segment layout reported by WLED, each with its own range."
+                                                         IsChecked="{Binding PerSegment, Mode=TwoWay}"
+                                                         Visibility="{Binding HasSegments, Converter={StaticResource BoolToVisibility}}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- segments -->
+                                <Border Style="{StaticResource Inset}" Margin="0,14,0,0"
+                                        Visibility="{Binding PerSegment, Converter={StaticResource BoolToVisibility}}">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="210" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="54" />
+                                                <ColumnDefinition Width="54" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Segment" Style="{StaticResource TxtCaption}" />
+                                            <TextBlock Grid.Column="1" Text="Channels" Style="{StaticResource TxtCaption}" />
+                                            <TextBlock Grid.Column="2" Text="Blend" Style="{StaticResource TxtCaption}" TextAlignment="Center" />
+                                            <TextBlock Grid.Column="3" Text="Rev" Style="{StaticResource TxtCaption}" TextAlignment="Center" />
+                                        </Grid>
+
+                                        <ItemsControl ItemsSource="{Binding Segments}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,4">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="210" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="54" />
+                                                            <ColumnDefinition Width="54" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="{Binding Title}" FontSize="11.5" />
+                                                            <TextBlock Text="{Binding LengthText}" Style="{StaticResource TxtCaption}" />
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                                            <Slider Minimum="1"
+                                                                    Maximum="{Binding DataContext.ChannelCount,
+                                                                                RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                                    IsSnapToTickEnabled="True" TickFrequency="1"
+                                                                    Value="{Binding ChannelStart, Mode=TwoWay}" />
+                                                            <Slider Minimum="1"
+                                                                    Maximum="{Binding DataContext.ChannelCount,
+                                                                                RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                                                                    IsSnapToTickEnabled="True" TickFrequency="1"
+                                                                    Value="{Binding ChannelEnd, Mode=TwoWay}" Margin="0,3,0,0" />
+                                                        </StackPanel>
+
+                                                        <CheckBox Grid.Column="2" Style="{StaticResource Check}"
+                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                  IsChecked="{Binding Gradient, Mode=TwoWay}" />
+                                                        <CheckBox Grid.Column="3" Style="{StaticResource Check}"
+                                                                  HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                  IsChecked="{Binding Reverse, Mode=TwoWay}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- ================= empty state ================= -->
+            <Border Style="{StaticResource Inset}"
+                    Visibility="{Binding HasNoDevices, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <TextBlock Text="Nothing to map yet" Style="{StaticResource TxtH2}" />
+                    <TextBlock Text="Add a WLED controller on the Devices page, then its channel range appears here."
+                               Style="{StaticResource TxtCaption}" Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
