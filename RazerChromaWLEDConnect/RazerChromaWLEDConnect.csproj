@@ -42,4 +42,13 @@
     <Copy SourceFiles="@(HidApiFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
   </Target>
 
+  <!-- dotnet publish does not pick up files we copied into $(OutDir) by hand, so the native
+       HID library has to be placed next to the published executable as well. -->
+  <Target Name="CopyHidApiToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <HidApiPublishFiles Include="$(PkgHidApiAdapter)\contentFiles\any\netstandard2.0\hidapi*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(HidApiPublishFiles)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

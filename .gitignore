@@ -380,3 +380,10 @@ crash.log
 .idea/
 *.user
 *.suo
+publish.log
+RELEASE-NOTES-v0.1.0.md
+TEST-REPORT.md
+UPGRADE-NOTES.md
+build.cmd
+publish.cmd
+
